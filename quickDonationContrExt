@@ -1,0 +1,287 @@
+public class quickDonationControllerExtension {
+    
+    public opportunity thisrecord {get;set;}
+    
+    public ApexPages.standardController rts;
+    
+    public string opp = '';
+    
+ //     BUILD ALL GETTERS AND SETTERS   
+    
+    public string paytype {get;set;}
+    public string allPayments {get;set;}   
+    public string ckno {get;set;}
+
+    public void setPayType (string userinput) {
+        this.paytype = userinput;
+    }
+
+    public void setAllPayments (string userinput) {
+        this.allPayments = userinput;
+    }
+    
+
+    public void setckno (string userinput) {
+        this.ckno = userinput;
+    }
+            
+    
+    public list<SelectOption> getPaymentType () {
+        List<SelectOption> paymentTypes = new list <SelectOption>();
+        paymentTypes.add(new SelectOption ('Cash' , 'Cash'));
+        paymentTypes.add(new SelectOption ('Check', 'Check'));
+        paymentTypes.add(new SelectOption ('Credit Card', 'Credit'));
+        return paymentTypes;
+    }
+    
+
+    public string membershipAmount {get;set;}
+    public string membershipPayment {get;set;}
+
+    
+    public void setMembershipAmount (string userinput) {
+        this.membershipAmount = userinput;
+    }
+        
+    
+    public void setMembershipPayment (string userinput) {
+        this.membershipPayment = userinput;
+    }    
+
+    private string membertype = '';
+       
+ 
+    public list<SelectOption> getMembershipType () {
+        List<SelectOption> memberTypes = new list <SelectOption>();
+        memberTypes.add(new SelectOption ('Individual' , 'Individual'));
+        memberTypes.add(new SelectOption ('Family', 'Family'));
+        memberTypes.add(new SelectOption ('Organization', 'Organization'));
+        memberTypes.add(new SelectOption ('Student/Low-Income', 'Student/Linc'));
+        return memberTypes;
+    }
+
+//   PLAN TO WRITE A WRAPPER CLASS TYING LIST QUERY RESULT 'DONATIONTYPES' INTO A WRAPPER WITH GETTER AND SETTER METHODS
+//   PROB ALSO HAVE TO WRITE SOME CSS FOR THE PAGE VIEW OF DATA
+
+    
+    public boolean donationbutton = false;   
+    
+
+    public boolean anon {get;set;}
+    public boolean matching {get;set;}
+    public string matchdonor {get;set;}
+
+
+    public void setanon (boolean userinput) {
+        this.anon = userinput;
+    }
+
+
+    public void setmatching (boolean userinput) {
+        this.matching = userinput;
+    }
+
+    public void setmatchdonor (string userinput) {
+        this.matchdonor = userinput;
+    }
+
+    public boolean getDonationButton() {
+        return donationButton;
+    }
+    
+    
+//  START DECLARATION OF WRAPPER CLASS AND ITS ACOUTREMENTS    
+    
+    
+list <donationItems> actualDons;    
+
+    public list <donationItems> getActualDons() {
+
+        return actualDons;
+
+    }
+
+//  THIS INNER CLASS TO HOLD DONATION DETAILS 
+
+    public class donationItems {
+
+        private npsp__general_accounting_unit__c donation;
+
+        public donationItems (npsp__general_accounting_unit__c donType) {
+
+            this.donation = donType;          
+
+        }
+
+        public string recid {
+
+            get {return donation.id;}
+
+        }
+
+        public string donaname {
+
+            get {return donation.name;}
+
+        }
+
+        public string amount { get; set; }
+        
+        
+    }   //  END WRAPPER
+    
+
+    public quickDonationControllerExtension (apexPages.StandardController controller)  {
+        this.thisrecord = (opportunity)controller.getrecord();
+        rts = controller;
+        opp = thisrecord.id;
+        system.debug(opp); 
+        
+	    thisrecord.npe01__Membership_Start_Date__c=defaultDates.getDefaultMembershipStart();
+            
+    }  
+    
+
+    public pageReference addDonations() {
+        
+        DonationButton=true;
+         
+        list <npsp__general_accounting_unit__c> donationtypes = new list <npsp__general_accounting_unit__c>([select id, name, npsp__active__c 
+                 from npsp__general_accounting_unit__c where npsp__active__c = true]);
+        
+        system.debug(donationtypes);
+        
+        if (actualdons == null) {
+            
+            actualDons = new list <donationItems>();
+            for (npsp__general_accounting_unit__c dontype : donationtypes) {
+                
+                actualdons.add(new donationItems(dontype));  
+            }  
+            
+            system.debug(actualDons);
+        }
+                    
+        
+        return null;
+    }
+    
+    
+    
+    
+    
+    public pageReference buildRecords() {
+        
+        if (string.isblank(allpayments)) {
+
+            ApexPages.Message myMsg = new ApexPages.Message(ApexPages.Severity.ERROR,'Error: You must enter an amount for this transaction.');
+            ApexPages.addMessage(myMsg);
+            return null;
+                       
+        }
+        
+        decimal donationamount;
+        decimal totaldonations = 0;
+        map <string, decimal> buildAllocation = new map <string, decimal>(); // npsp__allocation__c
+
+        decimal transactiontotal;
+        decimal membershiptotal;
+        decimal dmembershippayment;   
+        boolean balancing;
+        
+        
+//  RETRIEVE AND MAP DONATION AMOUNTS
+        
+        for (donationItems adon : actualDons) {
+            
+            if (!string.isblank(adon.amount)) {
+                
+                donationamount = decimal.valueof(morestring.justnumbers(adon.amount))/100;
+                totaldonations += donationamount;
+                buildAllocation.put(adon.recid, donationamount);               
+            }
+        }
+        
+//  PARSE OTHER STRINGS HOLDING MONETARY VALUES...  
+        
+        transactiontotal = decimal.valueof(morestring.justnumbers(allpayments))/100;
+        dmembershippayment = decimal.valueof(morestring.justnumbers(membershippayment))/100;
+        membershiptotal = decimal.valueof(morestring.justnumbers(membershipamount))/100;
+        
+        if (transactiontotal != dmembershippayment + totaldonations) {
+            
+            ApexPages.Message myMsg = new ApexPages.Message(ApexPages.Severity.ERROR,
+                                                            'Error: The total payment and its allocations must be equal.');
+            ApexPages.addMessage(myMsg);
+            
+            return null;
+        }
+
+        else {
+            
+//  GET RECORDTYPES FOR TRANSACTIONS...
+
+            recordtype m;
+            recordtype d;
+            
+            for (recordtype rt : [SELECT ID, name from recordtype where name = 'Donation' or 
+                                  name = 'Membership']) {
+                                      if (rt.name == 'Membership') {
+                                          m = rt;
+                                      }
+                                      else {
+                                          d = rt;
+                                      }
+                                  }
+           
+            list <opportunity> newdons = new list<opportunity>();
+            string donid;
+            list <npsp__Allocation__c> newalls = new list <npsp__Allocation__c>();
+            
+            newdons.add(new opportunity(name = 'x', npsp__Primary_Contact__c = thisrecord.npsp__Primary_Contact__c, account =
+                                        thisrecord.account, amount = dmembershippayment, stagename = 'Posted',
+                                        closedate = thisrecord.closedate, npe01__Membership_Start_Date__c = 
+                                        thisrecord.npe01__Membership_Start_Date__c, recordtype = m,
+                                        CheckNum__c = ckno, transaction_type__c = paytype));
+            
+            if (!newdons.isempty()) {
+                insert newdons;
+            }
+
+            
+            if (totaldonations > 0) {
+                newdons.clear();
+                newdons.add(new opportunity(name = 'x',npsp__Primary_Contact__c = thisrecord.npsp__Primary_Contact__c, account =
+                                            thisrecord.account, amount = totaldonations, stagename = 'Posted',
+                                            closedate = thisrecord.closedate, recordtype = d, Donation_is_Anonymous__c = anon,
+                                            CheckNum__c = ckno, transaction_type__c = paytype));
+                
+                database.saveresult[] srlist = database.insert(newdons);
+                
+                for (database.saveresult sr : srlist) {
+                    donid = sr.getid();
+                }
+                
+                for (string key : buildallocation.keyset()) {
+                    newalls.add(new npsp__Allocation__c(npsp__General_Accounting_Unit__c = key, npsp__Amount__c = buildAllocation.get(key),
+                                                       npsp__Opportunity__c = donid));
+                    }
+                
+                
+                if (!newalls.isempty()) {
+                    insert newalls;
+                }
+
+            }
+
+
+        }
+        
+        
+        return null;
+        
+        
+    }
+
+
+}
