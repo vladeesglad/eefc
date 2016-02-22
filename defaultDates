@@ -1,0 +1,15 @@
+public class defaultDates {
+    
+    public static date getDefaultMembershipStart(){
+        date startd;
+        startd=date.Today();
+        return startd;
+    }
+    
+    public static date getDefaultMemberhipEnd() {
+        date endd;
+        endd=date.Today() + 1;
+        return endd;
+    }
+
+}
