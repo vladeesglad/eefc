@@ -1,0 +1,97 @@
+@istest
+public class testQuickDonation {
+
+//  NOTING THAT .getParameters().put() DID NOTHING TO RUN MY CODE.... STILL SOMETHING TO FIGURE OUT HERE REGARDING HOW TO
+//  SET VALUES FOR MEMBERS OF WRAPPER CLASS IN TEST
+    
+    public static testmethod void createquickdonation() {
+        
+        recordtype hrt;
+        for (recordtype rt :[select id, name from recordtype where name = 'Household']) {
+            hrt = rt;
+        }
+        
+        string donid1;
+        string donid2;
+        
+        npsp__general_accounting_unit__c dontype1 = new npsp__general_accounting_unit__c(name = 'TestFund1');
+        
+        database.saveresult d1 = database.insert(dontype1);
+        
+        donid1 = d1.getid();
+        
+        npsp__general_accounting_unit__c dontype2 = new npsp__general_accounting_unit__c(name = 'TestFund2');
+        
+        database.saveresult d2 = database.insert(dontype2);
+        
+        donid2 = d2.getid();
+           
+        account nac = new account (name = 'x', recordtype = hrt);
+        
+        database.saveresult sr = database.insert(nac);
+        
+        string acid;        
+        
+        acid = sr.getid();
+        
+        contact ajane = new contact(firstname = 'Jane', lastname = 'Doe', accountid = acid);
+        
+        database.saveresult ss = database.insert(ajane);
+        
+        string conid;        
+        
+        conid = ss.getid();
+        
+        PageReference pageRef = new PageReference('quickDonation');        
+        
+        opportunity newopp = new opportunity(name = 'x', closedate = date.today());
+        
+        apexPages.standardController opp = new apexPages.standardController(newopp);
+        
+        quickDonationControllerExtension oplus = new quickDonationControllerExtension(opp);   
+        
+        oplus.addDonations();
+
+//	REWRITE LIKE THIS TO EXERCISE GETTER/SETTER METHODS IN THE EXTENSION CONTROLLER...        
+        
+        oplus.setMembershipPayment('343f3');
+        oplus.setPayType('Check');
+        oplus.setAllPayments('');
+        oplus.setckno('3435');
+        oplus.setMembershipAmount('qwef90345');
+        oplus.setMembershipPayment('234wdfas');
+        oplus.setmatchdonor('');
+        oplus.setmatching(false);
+        oplus.setanon(true);
+        
+        list <system.selectoption> ptype = oplus.getPaymentType();
+        
+        list <system.selectoption> mtype = oplus.getMembershipType();        
+
+        test.starttest();
+          
+        oplus.buildRecords();
+
+        oplus.setAllPayments('f23455');        
+        
+        oplus.buildRecords();        
+        
+		PageRef.getParameters().put('don.recid',donid1);
+        PageRef.getParameters().put('don.amount', '2500');
+        
+        oplus.setAllPayments('20000');
+        oplus.setMembershipAmount('20000');
+        oplus.setMembershipPayment('20000');        
+        
+        oplus.buildrecords();
+           
+        oplus.setAllPayments('22500');
+        
+        oplus.buildrecords();        
+
+        test.stoptest();
+
+        
+    }
+
+}
