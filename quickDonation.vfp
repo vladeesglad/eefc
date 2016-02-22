@@ -1,0 +1,140 @@
+<apex:page standardController="Opportunity" extensions="quickDonationControllerExtension" title="Membership / Donation Form">
+    <!-- Begin Content -->
+    
+    <style>
+    
+        .dontable {        
+        text-align:left;
+        border:1px;
+        cellspacing:2px;
+        cellpadding:2px;
+        font-family:sans-serif; 
+        font-size:12px; 
+        font-weight:bold"
+        margin-left:100px;
+        }
+        
+            table#table1 {
+        width:70%;
+        margin-left:15%;
+        margin-right:15%;
+        
+        }
+        
+            .col1 {
+        text-align:left;
+        }
+        
+            .col2 {
+        text-align:left;
+        }
+        
+            .col3  {
+        text-align:right;
+        width:100px;
+        }
+        
+            header {
+        text-align:center;
+        }
+
+            .header {
+        text-align:center;
+        }        
+    
+    </style>
+    
+    
+    <apex:form >
+        <apex:pageBlock title="Membership / Donation Form" mode="edit" tabStyle="opportunity">
+
+            <apex:pageBlockSection columns="2" collapsible="true">
+                <apex:inputField value="{!Opportunity.npsp__Primary_Contact__c}"/>
+                <apex:inputField value="{!Opportunity.CloseDate}" /> 
+                <apex:inputField value="{!Opportunity.AccountId}"/>
+            </apex:pageBlockSection>  
+            
+            <apex:pageblockSection columns="2" title="This Transaction">              
+                <apex:selectRadio label="Payment type" value="{!payType}" >
+                    <apex:selectOptions value="{!paymentType}" />
+                </apex:selectRadio>
+                <apex:inputText label="Amount" value="{!allPayments}"/>
+                <apex:inputText label="Check #" value="{!ckno}"/>
+            </apex:pageblockSection>
+            
+            <apex:pageMessages />
+            
+            <apex:pageblockSection title="Membership Allocation">
+                <apex:inputField value="{!Opportunity.Membership_Type__c}"/>
+                <apex:inputField value="{!Opportunity.npe01__Membership_Start_Date__c}"/>
+                <apex:inputText label="Membership Total Amount" value="{!membershipAmount}"/>
+                <apex:inputField value="{!Opportunity.npe01__Membership_End_Date__c}"/>  
+                <apex:inputText label="Payment Amount" value="{!membershipPayment}"/>                
+            </apex:pageblockSection>  
+            
+            
+            
+            
+            <apex:pageblockSection id="donationpanel1" title="Add Allocations" rendered="{!!donationbutton}" >
+                <div style="text-align:center">
+
+                    <apex:commandButton style="width:35%"  value="SHOW ALLOCATIONS" action="{!addDonations}"/>
+                                          
+                </div>              
+            </apex:pageblockSection>
+         
+            <apex:pageBlockSection id="donationpanel2" title="Add Donations" rendered="{!donationbutton}" >
+                
+                <apex:inputcheckbox label="Anonymous Donation?" value="{!anon}"/>
+                <apex:inputtext label="If expecting matching -- Donor Name: " value="{!matchdonor}"/>                
+
+                <apex:pageBlockTable styleclass="dontable" value="{!actualDons}" var="don" columns="3"
+                                     columnClasses="col1,col2,col3">                                                                                                             >
+                    
+                    
+                    <apex:column rendered="false">
+                        <apex:facet name="header">ID</apex:facet>
+                        
+                        {!don.recid}
+                        
+                    </apex:column><br/>                     
+         
+                    
+                    <apex:column headerValue="Donation Fund">
+                        <apex:facet name="header">Donation Fund</apex:facet>
+                        {!don.donaname}
+                        
+                    </apex:column>                        
+                    
+                       
+
+                    
+                    <apex:column >
+                        <apex:facet name="header">Amount</apex:facet>
+                        <apex:inputtext styleClass="col3" 
+                                        title="Enter value in dollars and cents." 
+                                        value="{!don.amount}"/>
+                        
+                    </apex:column>                        
+                    
+                    
+   
+                    
+                </apex:pageBlockTable>  
+
+            
+            </apex:pageblockSection>
+            
+ 
+            
+            <apex:pageblocksection title="Submit for Review">
+                <div style="text-align:right">
+                <apex:commandButton style="align:right;width:30%"  value="REVIEW AND SAVE" action="{!buildRecords}" />
+                </div>
+
+            </apex:pageblocksection>
+            
+        </apex:pageblock>
+    </apex:form>
+<!-- End Content -->
+</apex:page>
