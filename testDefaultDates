@@ -1,0 +1,21 @@
+@ istest
+
+public class testDefaultDates {
+    
+    public static testMethod void testTheDates() {
+    
+        
+        test.startTest();
+        
+        date adate = defaultDates.getDefaultMembershipStart();
+        date nutherdate = defaultDates.getDefaultMemberhipEnd();
+        
+        system.assertequals(date.today(), adate);
+        system.assertequals(date.today() + 1, nutherdate);
+        
+        
+        test.stopTest();
+        
+    }
+    
+}
